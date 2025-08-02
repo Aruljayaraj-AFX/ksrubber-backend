@@ -3,7 +3,6 @@ from models.Die_models import Die
 import uuid
 from datetime import datetime, timedelta,date
 
-# REMOVE async
 def new_die(data, db: Session):
     try:
         new_die = Die(
