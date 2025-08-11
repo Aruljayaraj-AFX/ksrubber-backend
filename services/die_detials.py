@@ -65,7 +65,7 @@ def compute_production_hours(
 
         production_count = production_counts[idx]
         try:
-            hours = round(production_count / die.Pro_hr_count, 2)
+            hours = round(production_count / die.Pro_hr_count)
         except ZeroDivisionError:
             hours = None
 

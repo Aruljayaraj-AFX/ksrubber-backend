@@ -47,3 +47,15 @@ def calculate_production_hours(request: ProductionFilterRequest, db: Session = D
         db=db
     )
 
+@router.delete("/delete_die/{die_id}")
+async def delete_die(die_id: str, db: Session = Depends(get_db)):
+    die_to_delete = db.query(Die).filter(Die.DieId == die_id).first()
+    if not die_to_delete:
+        raise HTTPException(status_code=404, detail="Die not found")
+    try:
+        db.delete(die_to_delete)
+        db.commit()
+        return {"status": "success", "message": f"Die {die_id} deleted successfully."}
+    except Exception as e:
+        return {"status": "error", "message": "Failed to delete die", "details": str(e)}
+    
