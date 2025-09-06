@@ -8,7 +8,7 @@ class Die(Base1):
     __tablename__ = 'Die'
 
     DieId = Column(String, primary_key=True,nullable=False)
-    DieName = Column(String, nullable=False)
+    DieName = Column(String, nullable=True)
     CompanyName = Column(String, nullable=False)
     Materials = Column(String, nullable=False)
     Cavity = Column(Integer, nullable=False)
