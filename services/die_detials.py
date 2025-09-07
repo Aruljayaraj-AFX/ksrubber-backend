@@ -35,12 +35,12 @@ def get_production_by_date(db: Session, input_date: DateType):
         return {"status": "success", "data": daily_update}
     except Exception as e:
         return {"status": "error", "message": "Failed to fetch production data", "details": str(e)}
-
 def compute_production_hours(
     die_ids: List[str],
     production_counts: List[int],
     db: Session,
-    input_date: DateType = None
+    input_date: DateType = None,
+    sub_flag: int = 1  # default 1 → normal day
 ):
     if len(die_ids) != len(production_counts):
         return {
@@ -83,9 +83,12 @@ def compute_production_hours(
             "CalculatedHours": hours
         })
 
-    # Step 2: Apply deletion logic (skip if Sunday)
-    del_value = 8
-    if input_date and input_date.weekday() == 6:  # Sunday → weekday() == 6
+    # Step 2: Apply deletion logic
+    # Only apply deletion if sub_flag == 1 (i.e., checkbox not selected / normal day)
+    del_value = 8 if sub_flag == 1 else 0
+
+    # Skip deletion automatically if Sunday
+    if input_date and input_date.weekday() == 6:
         del_value = 0
 
     updated_hours = hours_list.copy()
