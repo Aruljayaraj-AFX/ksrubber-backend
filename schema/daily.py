@@ -5,5 +5,5 @@ from datetime import date
 class ProductionFilterRequest(BaseModel):
     DieIds: List[str]
     ProductionCounts: List[int]
-    date: Optional[date] = None
+    production_date: Optional[date] = None
     sub_flag: Optional[int] = 1  # optional, default normal day
