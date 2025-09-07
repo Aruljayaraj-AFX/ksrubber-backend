@@ -49,6 +49,7 @@ def calculate_production_hours(request: ProductionFilterRequest, db: Session = D
         die_ids=request.DieIds,
         production_counts=request.ProductionCounts,
         input_date=request.date,
+        sub_flag=request.sub_flag,  # pass the flag from request
         db=db
     )
 

@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import extract
 from datetime import date as DateType
@@ -35,12 +35,13 @@ def get_production_by_date(db: Session, input_date: DateType):
         return {"status": "success", "data": daily_update}
     except Exception as e:
         return {"status": "error", "message": "Failed to fetch production data", "details": str(e)}
+
 def compute_production_hours(
     die_ids: List[str],
     production_counts: List[int],
     db: Session,
-    input_date: DateType = None,
-    sub_flag: int = 1  # default 1 → normal day
+    input_date: Optional[DateType] = None,
+    sub_flag: Optional[int] = None  # default 1 → normal day
 ):
     if len(die_ids) != len(production_counts):
         return {
