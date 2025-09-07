@@ -64,12 +64,12 @@ async def delete_die(die_id: str, db: Session = Depends(get_db)):
     except Exception as e:
         return {"status": "error", "message": "Failed to delete die", "details": str(e)}
     
-
 @router.post("/compute_production/")
 def compute_production_api(
     die_ids: List[str],
     production_counts: List[int],
     input_date: Optional[DateType] = None,
+    sub_flag: int = 0,  # <-- New parameter to control deletion logic
     db: Session = Depends(get_db)
 ):
     # --- Step 0: Validation ---
@@ -114,8 +114,8 @@ def compute_production_api(
             "CalculatedHours": hours
         })
 
-    # --- Step 2: Apply deletion logic (skip if Sunday) ---
-    del_value = 8
+    # --- Step 2: Apply deletion logic (skip if Sunday or sub_flag != 1) ---
+    del_value = 8 if sub_flag == 1 else 0
     if input_date and input_date.weekday() == 6:  # Sunday = 6
         del_value = 0
 
