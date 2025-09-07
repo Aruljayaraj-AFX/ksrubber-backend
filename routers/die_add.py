@@ -70,35 +70,24 @@ def compute_production_api(
     die_ids: List[str],
     production_counts: List[int],
     input_date: Optional[DateType] = None,
+    is_holiday: Optional[bool] = False,
     db: Session = Depends(get_db)
 ):
-    # --- Step 0: Validation ---
     if len(die_ids) != len(production_counts):
-        return {
-            "status": "error",
-            "message": "DieIds and ProductionCounts must have the same length"
-        }
+        return {"status": "error", "message": "DieIds and ProductionCounts must have the same length"}
 
     result = []
     hours_list = []
 
-    # --- Step 1: Calculate production hours ---
     for idx, die_id in enumerate(die_ids):
         die = db.query(Die).filter(Die.DieId == die_id).first()
         if not die:
-            result.append({
-                "DieId": die_id,
-                "error": "Die not found"
-            })
+            result.append({"DieId": die_id, "error": "Die not found"})
             hours_list.append(None)
             continue
 
         production_count = production_counts[idx]
-        try:
-            hours = round(production_count / die.Pro_hr_count, 2) if die.Pro_hr_count else None
-        except ZeroDivisionError:
-            hours = None
-
+        hours = round(production_count / die.Pro_hr_count, 2) if die.Pro_hr_count else None
         hours_list.append(hours)
 
         result.append({
@@ -114,9 +103,9 @@ def compute_production_api(
             "CalculatedHours": hours
         })
 
-    # --- Step 2: Apply deletion logic (skip if Sunday) ---
+    # --- Apply deletion logic ---
     del_value = 8
-    if input_date and input_date.weekday() == 6:  # Sunday = 6
+    if input_date and (input_date.weekday() == 6 or is_holiday):
         del_value = 0
 
     updated_hours = hours_list.copy()
@@ -124,10 +113,8 @@ def compute_production_api(
 
     for i in range(len(updated_hours)):
         h = updated_hours[i]
-        if h is None:
-            continue
-        if del_value <= 0:
-            break
+        if h is None: continue
+        if del_value <= 0: break
         if h >= del_value:
             delete_list[i] = del_value
             updated_hours[i] = round(h - del_value, 2)
@@ -137,20 +124,16 @@ def compute_production_api(
             updated_hours[i] = 0
             del_value -= h
 
-    # --- Step 3: Multiply updated_hours by Price ---
+    # --- Multiply hours by price ---
     price_list = []
     total_price = 0
     for i in range(len(result)):
         h = updated_hours[i]
         price = result[i].get("Price")
-        if h is not None and price is not None:
-            calculated_price = round(h * price, 2)
-            price_list.append(calculated_price)
-            total_price += calculated_price
-        else:
-            price_list.append(None)
+        calculated_price = round(h * price, 2) if h is not None and price is not None else None
+        price_list.append(calculated_price)
+        if calculated_price: total_price += calculated_price
 
-    # --- Step 4: Construct Daily_Production-like object (no DB save) ---
     new_daily_pro = Daily_Production(
         date=input_date,
         DieId=die_ids,
@@ -162,7 +145,6 @@ def compute_production_api(
         monthy_pay=str(total_price)
     )
 
-    # --- Return serialized result ---
     return {
         "status": "success",
         "new_daily_pro": {
@@ -177,68 +159,3 @@ def compute_production_api(
         },
         "details": result
     }
-
-
-@router.get("/get_month_income/")
-def get_month_income(
-    year: int,
-    month: int,
-    db: Session = Depends(get_db)
-):
-    """
-    Get income for a given month and year from MonthIncome table.
-    """
-    month_income = db.query(MonthIncome).filter(
-        extract('year', MonthIncome.date) == year,
-        extract('month', MonthIncome.date) == month
-    ).first()
-
-    if not month_income:
-        return {
-            "status": "error",
-            "message": f"No income record found for {month:02d}-{year}"
-        }
-
-    return {
-        "status": "success",
-        "data": {
-            "month": month_income.date.strftime("%B %Y"),
-            "income": round(month_income.income, 2),
-            "recorded_on": month_income.created_at
-        }
-    }
-
-
-@router.delete("/delete_production/{sno}")
-def delete_production(sno: int, db: Session = Depends(get_db)):
-    try:
-        # Find the record by sno
-        production = db.query(Daily_Production).filter(Daily_Production.sno == sno).first()
-        if not production:
-            return {"status": "error", "message": "Production record not found"}
-
-        # Parse monthy_pay safely
-        old_value = float(production.monthy_pay) if production.monthy_pay else 0.0
-
-        # Find matching MonthIncome
-        month_income = db.query(MonthIncome).filter(
-            extract("month", MonthIncome.date) == production.date.month,
-            extract("year", MonthIncome.date) == production.date.year,
-        ).first()
-
-        if month_income:
-            month_income.income = max(month_income.income - old_value, 0)
-
-        # Delete production
-        db.delete(production)
-        db.commit()
-
-        return {
-            "status": "success",
-            "message": f"Production sno={sno} deleted successfully",
-            "updated_income": round(month_income.income, 2) if month_income else None,
-        }
-
-    except Exception as e:
-        db.rollback()
-        return {"status": "error", "message": f"Failed to delete: {str(e)}"}
