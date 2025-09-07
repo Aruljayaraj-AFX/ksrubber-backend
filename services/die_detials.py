@@ -160,10 +160,14 @@ def compute_production_hours(
             updated_income = round(existing.income, 2)
             db.commit()
         else:
-            return {
-                "status": "error",
-                "message": f"Income entry not found for {input_date.strftime('%B %Y')}"
-            }
+            new_income = MonthIncome(
+            date=input_date.replace(day=1),   # store 1st day of month
+            income=round(total_price + 13000, 2),  # add 13,000 on create
+            extra=0
+            )
+            db.add(new_income)
+            db.commit()
+            db.refresh(new_income)
 
     # Final return
     return {
