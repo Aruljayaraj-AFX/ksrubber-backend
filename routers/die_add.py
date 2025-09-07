@@ -114,8 +114,11 @@ def compute_production_api(
             "CalculatedHours": hours
         })
 
-    # --- Step 2: Apply deletion logic (fixed 8) ---
+    # --- Step 2: Apply deletion logic (skip if Sunday) ---
     del_value = 8
+    if input_date and input_date.weekday() == 6:  # Sunday = 6
+        del_value = 0
+
     updated_hours = hours_list.copy()
     delete_list = [0] * len(updated_hours)
 
