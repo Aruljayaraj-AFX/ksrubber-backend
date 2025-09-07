@@ -36,7 +36,6 @@ def get_production_by_date(db: Session, input_date: DateType):
     except Exception as e:
         return {"status": "error", "message": "Failed to fetch production data", "details": str(e)}
 
-
 def compute_production_hours(
     die_ids: List[str],
     production_counts: List[int],
@@ -84,8 +83,11 @@ def compute_production_hours(
             "CalculatedHours": hours
         })
 
-    # Step 2: Apply deletion logic (fixed value 8)
+    # Step 2: Apply deletion logic (skip if Sunday)
     del_value = 8
+    if input_date and input_date.weekday() == 6:  # Sunday → weekday() == 6
+        del_value = 0
+
     updated_hours = hours_list.copy()
     delete_list = [0] * len(updated_hours)
 
@@ -118,31 +120,32 @@ def compute_production_hours(
         else:
             price_list.append(None)
 
-    
-
-    # Step 5: Only update MonthIncome if record exists
+    # Step 4: Save to DB if input_date provided
     updated_income = None
     if input_date:
-        existing_entry = db.query(Daily_Production).filter(Daily_Production.date == input_date).first()
+        existing_entry = db.query(Daily_Production).filter(
+            Daily_Production.date == input_date
+        ).first()
         if existing_entry:
             return {
-            "status": "error",
-            "message": f"Production already exists for date {input_date}"
+                "status": "error",
+                "message": f"Production already exists for date {input_date}"
             }
 
         new_daily_pro = Daily_Production(
-        date=input_date,
-        DieId=die_ids,
-        overall_production=production_counts,
-        overall_time=hours_list,
-        delete_index_hr=delete_list, 
-        price=price_list,
-        overtime=updated_hours,
-        monthy_pay=str(total_price)
+            date=input_date,
+            DieId=die_ids,
+            overall_production=production_counts,
+            overall_time=hours_list,
+            delete_index_hr=delete_list, 
+            price=price_list,
+            overtime=updated_hours,
+            monthy_pay=str(total_price)
         )
 
         db.add(new_daily_pro)
         db.commit()
+
         existing = db.query(MonthIncome).filter(
             extract('month', MonthIncome.date) == input_date.month,
             extract('year', MonthIncome.date) == input_date.year
@@ -158,6 +161,7 @@ def compute_production_hours(
                 "message": f"Income entry not found for {input_date.strftime('%B %Y')}"
             }
 
+    # Final return
     return {
         "status": "success",
         "data": result,
