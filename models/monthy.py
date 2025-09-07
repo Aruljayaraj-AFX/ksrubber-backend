@@ -8,4 +8,5 @@ class MonthIncome(Base2):
 
     date = Column(Date, primary_key=True)  
     income = Column(Float, nullable=False)  
+    extra = Column(Float, nullable=False, default=0)  # <-- new column with default 0
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
