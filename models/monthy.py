@@ -8,6 +8,6 @@ class MonthIncome(Base2):
 
     date = Column(Date, primary_key=True)  
     income = Column(Float, nullable=False)  
-    tea = Column(String, nullable=True, default=0)
-    water = Column(String, nullable=True, default=0)
+    tea = Column(Float, nullable=True, default=0)
+    water = Column(Float, nullable=True, default=0)
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
