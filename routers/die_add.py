@@ -49,8 +49,11 @@ def calculate_production_hours(request: ProductionFilterRequest, db: Session = D
         die_ids=request.DieIds,
         production_counts=request.ProductionCounts,
         input_date=request.production_date,
-        sub_flag=request.sub_flag,  # pass the flag from request
+        sub_flag=request.sub_flag,  
+        tea=request.tea,
+        water = request.water,
         db=db
+
     )
 
 @router.delete("/delete_die/{die_id}")
@@ -243,3 +246,4 @@ def delete_production(sno: int, db: Session = Depends(get_db)):
     except Exception as e:
         db.rollback()
         return {"status": "error", "message": f"Failed to delete: {str(e)}"}
+    

@@ -41,6 +41,8 @@ def compute_production_hours(
     production_counts: List[int],
     db: Session,
     input_date: Optional[DateType] = None,
+    tea:Optional[int]=0,
+    water:Optional[int]=0,
     sub_flag: Optional[int] = None  # default 1 → normal day
 ):
     if len(die_ids) != len(production_counts):
@@ -157,13 +159,16 @@ def compute_production_hours(
 
         if existing:
             existing.income += total_price
+            existing.tea+=tea
+            existing.water+=water
             updated_income = round(existing.income, 2)
             db.commit()
         else:
             new_income = MonthIncome(
             date=input_date.replace(day=1),   # store 1st day of month
             income=round(total_price + 13000, 2),  # add 13,000 on create
-            extra=0
+            tea=0
+            water=0
             )
             db.add(new_income)
             db.commit()
