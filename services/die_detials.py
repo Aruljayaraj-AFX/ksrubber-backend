@@ -167,7 +167,7 @@ def compute_production_hours(
             new_income = MonthIncome(
             date=input_date.replace(day=1),   # store 1st day of month
             income=round(total_price + 13000, 2),  # add 13,000 on create
-            tea=0
+            tea=0,
             water=0
             )
             db.add(new_income)
