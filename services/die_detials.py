@@ -1,10 +1,11 @@
 from typing import List, Optional
 from sqlalchemy.orm import Session
-from sqlalchemy import extract
+from sqlalchemy import extract,func
 from datetime import date as DateType
 from models.Die_models import Die
 from models.monthy import MonthIncome
 from models.production import Daily_Production
+from datetime import datetime
 
 
 def get_all_die_data(db: Session):
@@ -28,6 +29,31 @@ def get_daily_production(db: Session):
         return{"status":"success", "data":daily_update}
     except Exception as e:
         return {"status": "error", "message": "Failed to fetch dies", "details": str(e)}
+    
+def get_income(db: Session):
+    try:
+        now = datetime.now()
+        current_year = now.year
+        current_month = now.month
+        result = (
+            db.query(
+                func.sum(MonthIncome.income).label("total_income"),
+                func.sum(MonthIncome.tea).label("total_tea"),
+                func.sum(MonthIncome.water).label("total_water")
+            )
+            .filter(
+                extract('year', MonthIncome.date) == current_year,
+                extract('month', MonthIncome.date) == current_month
+            )
+            .first()
+        )
+        return {
+            "total_income": result.total_income ,
+            "total_tea": result.total_tea ,
+            "total_water": result.total_water
+        }
+    except Exception as e:
+        return {"status": "error", "message": "Failed to fetch monthly data", "details": str(e)}
 
 def get_production_by_date(db: Session, input_date: DateType):
     try:
