@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from database.db import get_db
 from schema.new_die import dailyupdate,DieUpdate
-from schema.daily import ProductionFilterRequest
+from schema.daily import ProductionFilterRequest,UpdateCurrentMonthIncome
 from services.die_add import new_die
 from services.editdie import edit_diee
 from services.die_detials import get_all_die_data,compute_production_hours,get_daily_production,get_die_data_by_name,get_production_by_date,get_income
@@ -251,3 +251,45 @@ def delete_production(sno: int, db: Session = Depends(get_db)):
         db.rollback()
         return {"status": "error", "message": f"Failed to delete: {str(e)}"}
     
+@router.put("/monthly-income/current")
+def update_current_month_income(data: UpdateCurrentMonthIncome, db: Session = Depends(get_db)):
+    try:
+        now = datetime.now()
+        current_year = now.year
+        current_month = now.month
+
+        # Find the record for the current month
+        income_record = (
+            db.query(MonthIncome)
+            .filter(
+                extract('year', MonthIncome.date) == current_year,
+                extract('month', MonthIncome.date) == current_month
+            )
+            .first()
+        )
+
+        if not income_record:
+            raise HTTPException(status_code=404, detail="Income record not found for the current month")
+
+        # Update values if provided
+        if data.tea is not None:
+            income_record.tea = data.tea
+        if data.water is not None:
+            income_record.water = data.water
+
+        db.commit()
+        db.refresh(income_record)
+
+        return {
+            "status": "success",
+            "message": "Current month income updated successfully",
+            "data": {
+                "date": income_record.date,
+                "tea": income_record.tea,
+                "water": income_record.water
+            }
+        }
+
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Failed to update current month income: {e}")

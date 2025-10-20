@@ -9,3 +9,7 @@ class ProductionFilterRequest(BaseModel):
     sub_flag: Optional[int] = 1  # optional, default normal day
     tea:Optional[int] = 0
     water : Optional[int]=0
+
+class UpdateCurrentMonthIncome(BaseModel):
+    tea: float | None = None
+    water: float | None = None

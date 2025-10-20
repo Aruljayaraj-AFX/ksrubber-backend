@@ -5,6 +5,7 @@ from datetime import date as DateType
 from models.Die_models import Die
 from models.monthy import MonthIncome
 from models.production import Daily_Production
+from schema.daily import UpdateCurrentMonthIncome
 from datetime import datetime
 
 
