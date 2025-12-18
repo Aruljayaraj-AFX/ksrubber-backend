@@ -212,7 +212,7 @@ def compute_production_api(
             "price": new_daily_pro.price,
             "overtime": new_daily_pro.overtime,
             "monthy_pay": str(total_price),
-            "daily_income":monthy
+            "daily_income":daily_price
         },
         "details": result
     }
