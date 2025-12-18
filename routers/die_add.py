@@ -159,6 +159,34 @@ def compute_production_api(
         else:
             price_list.append(None)
 
+    daily_price = 0
+    daily_income_setting = db.query(dailyIncome).first()
+    if daily_income_setting:
+        monthly_income = daily_income_setting.income
+    
+        month = input_date.month
+        year = input_date.year
+        
+        # total days in current month
+        total_days = calendar.monthrange(year, month)[1]
+    
+        non_sunday_days = 0
+    
+        for day in range(1, total_days + 1):
+            current_date = date(year, month, day)
+            if current_date.weekday() != 6:  # 6 = Sunday
+                non_sunday_days += 1
+    
+        # calculate per-day price
+        daily_price = monthly_income / non_sunday_days
+    monthy = total_price
+    if len(die_ids) == 1:
+        special_dies = {"KSD223adbd2", "KSDd3a58378"}
+        if len(die_ids) == 1 and die_ids[0] in special_dies:
+            monthy = str(total_price)
+        else:
+            monthy = str(total_price + daily_price)
+
     # --- Step 4: Construct Daily_Production-like object (no DB save) ---
     new_daily_pro = Daily_Production(
         date=input_date,
@@ -168,12 +196,12 @@ def compute_production_api(
         delete_index_hr=delete_list,
         price=price_list,
         overtime=updated_hours,
-        monthy_pay=str(total_price)
+        monthy_pay=monthy
     )
 
     # --- Return serialized result ---
     return {
-        "status": "success",
+        "status": "success", 
         "new_daily_pro": {
             "date": str(new_daily_pro.date) if new_daily_pro.date else None,
             "DieId": new_daily_pro.DieId,
@@ -182,7 +210,7 @@ def compute_production_api(
             "delete_index_hr": new_daily_pro.delete_index_hr,
             "price": new_daily_pro.price,
             "overtime": new_daily_pro.overtime,
-            "monthy_pay": new_daily_pro.monthy_pay
+            "monthy_pay": monthy
         },
         "details": result
     }

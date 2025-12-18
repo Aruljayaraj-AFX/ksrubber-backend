@@ -188,7 +188,7 @@ def compute_production_hours(
             # calculate per-day price
             daily_price = monthly_income / non_sunday_days
 
-        monthy = str(total_price)
+        monthy = total_price
         if len(die_ids) == 1:
             special_dies = {"KSD223adbd2", "KSDd3a58378"}
             if len(die_ids) == 1 and die_ids[0] in special_dies:
@@ -216,7 +216,7 @@ def compute_production_hours(
         ).first()
 
         if existing:
-            existing.income += int(monthy)
+            existing.income += float(monthy)
             existing.tea+=tea
             existing.water+=water
             updated_income = round(existing.income, 2)
@@ -224,7 +224,7 @@ def compute_production_hours(
         else:
             new_income = MonthIncome(
             date=input_date.replace(day=1),   # store 1st day of month
-            income=round(int(monthy), 2),  
+            income=round(float(monthy), 2),  
             tea=0,
             water=0
             )
