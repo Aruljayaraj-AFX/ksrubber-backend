@@ -211,7 +211,8 @@ def compute_production_api(
             "delete_index_hr": new_daily_pro.delete_index_hr,
             "price": new_daily_pro.price,
             "overtime": new_daily_pro.overtime,
-            "monthy_pay": monthy
+            "monthy_pay": str(total_price),
+            "daily_income":monthy
         },
         "details": result
     }
@@ -333,3 +334,16 @@ def update_income(income: float, db: Session = Depends(get_db)):
     row.income = income
     db.commit()
     return {"message": "Income updated", "income": row.income}
+
+@router.get("/get-setting-income")
+def get_income(db: Session = Depends(get_db)):
+    row = db.query(dailyIncome).filter(dailyIncome.id == 1).first()
+    if not row:
+        raise HTTPException(status_code=404, detail="Setting income not found")
+
+    return {
+        "id": row.id,
+        "income": row.income,
+        "created_at": row.created_at,
+        "updated_at": row.updated_at
+    }
