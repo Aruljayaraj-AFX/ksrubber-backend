@@ -13,6 +13,7 @@ from datetime import date as DateType
 from models.production import Daily_Production
 from sqlalchemy import extract
 from models.monthy import MonthIncome
+from models.setting_income import dailyIncome
 
 
 
@@ -293,3 +294,13 @@ def update_current_month_income(data: UpdateCurrentMonthIncome, db: Session = De
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=f"Failed to update current month income: {e}")
+    
+@router.put("/setting-income")
+def update_income(income: float, db: Session = Depends(get_db)):
+    row = db.query(dailyIncome).filter(dailyIncome.id == 1).first()
+    if not row:
+        raise HTTPException(status_code=500, detail="Setting row missing")
+
+    row.income = income
+    db.commit()
+    return {"message": "Income updated", "income": row.income}
