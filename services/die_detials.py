@@ -216,7 +216,7 @@ def compute_production_hours(
         ).first()
 
         if existing:
-            existing.income += total_price
+            existing.income += monthy
             existing.tea+=tea
             existing.water+=water
             updated_income = round(existing.income, 2)
@@ -224,7 +224,7 @@ def compute_production_hours(
         else:
             new_income = MonthIncome(
             date=input_date.replace(day=1),   # store 1st day of month
-            income=round(total_price, 2),  
+            income=round(monthy, 2),  
             tea=0,
             water=0
             )
