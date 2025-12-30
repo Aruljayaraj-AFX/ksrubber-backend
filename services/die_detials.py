@@ -4,9 +4,12 @@ from sqlalchemy import extract,func
 from datetime import date as DateType
 from models.Die_models import Die
 from models.monthy import MonthIncome
+from models.setting_income import dailyIncome
 from models.production import Daily_Production
 from schema.daily import UpdateCurrentMonthIncome
 from datetime import datetime
+from datetime import date, timedelta
+import calendar
 
 
 def get_all_die_data(db: Session):
@@ -164,6 +167,34 @@ def compute_production_hours(
                 "status": "error",
                 "message": f"Production already exists for date {input_date}"
             }
+        daily_price = 0
+        daily_income_setting = db.query(dailyIncome).first()
+        if daily_income_setting:
+            monthly_income = daily_income_setting.income
+        
+            month = input_date.month
+            year = input_date.year
+            
+            # total days in current month
+            total_days = calendar.monthrange(year, month)[1]
+        
+            non_sunday_days = 0
+        
+            for day in range(1, total_days + 1):
+                current_date = date(year, month, day)
+                if current_date.weekday() != 6:  # 6 = Sunday
+                    non_sunday_days += 1
+        
+            # calculate per-day price
+            daily_price = monthly_income / non_sunday_days
+
+        monthy = total_price
+        if len(die_ids) == 1:
+            special_dies = {"KSD223adbd2", "KSDd3a58378"}
+            if len(die_ids) == 1 and die_ids[0] in special_dies:
+                monthy = str(total_price)
+            else:
+                monthy = str(total_price + daily_price)
 
         new_daily_pro = Daily_Production(
             date=input_date,
@@ -173,7 +204,7 @@ def compute_production_hours(
             delete_index_hr=delete_list, 
             price=price_list,
             overtime=updated_hours,
-            monthy_pay=str(total_price)
+            monthy_pay=monthy
         )
 
         db.add(new_daily_pro)
@@ -185,7 +216,7 @@ def compute_production_hours(
         ).first()
 
         if existing:
-            existing.income += total_price
+            existing.income += float(monthy)
             existing.tea+=tea
             existing.water+=water
             updated_income = round(existing.income, 2)
@@ -193,7 +224,7 @@ def compute_production_hours(
         else:
             new_income = MonthIncome(
             date=input_date.replace(day=1),   # store 1st day of month
-            income=round(total_price + 13000, 2),  # add 13,000 on create
+            income=round(float(monthy), 2),  
             tea=0,
             water=0
             )

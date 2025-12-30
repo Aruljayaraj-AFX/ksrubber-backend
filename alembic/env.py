@@ -7,6 +7,7 @@ from alembic import context
 from database.db import engine
 from models.production import Base
 from models.monthy import Base2
+from models.setting_income import Base4
 from models.Die_models import Base1
 
 # this is the Alembic Config object, which provides
@@ -22,7 +23,7 @@ if config.config_file_name is not None:
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
-target_metadata = Base.metadata,Base2.metadata,Base1.metadata 
+target_metadata = Base.metadata,Base2.metadata,Base1.metadata,Base4.metadata
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
