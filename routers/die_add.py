@@ -179,6 +179,27 @@ def compute_production_api(
         if len(die_ids) == 1 and die_ids[0] in special_dies:
             leave = 1
 
+    existing = db.query(MonthIncome).filter(
+            extract('month', MonthIncome.date) == input_date.month,
+            extract('year', MonthIncome.date) == input_date.year
+        ).first()
+    updated_income = 0
+    if existing:
+        if leave == 1:
+            existing.income -= float(daily_price)
+        else:
+            existing.income += float(total_price)
+        updated_income = round(existing.income, 2)
+        db.commit()
+    else:
+        new_income = MonthIncome(
+        date=input_date.replace(day=1),   # store 1st day of month
+        income=round(float(total_price + monthly_income), 2),  
+        tea=0,
+        water=0
+        )
+        updated_income = round(new_income.income, 2)
+
     # --- Step 4: Construct Daily_Production-like object (no DB save) ---
     new_daily_pro = Daily_Production(
         date=input_date,
@@ -188,7 +209,8 @@ def compute_production_api(
         delete_index_hr=delete_list,
         price=price_list,
         overtime=updated_hours,
-        monthy_pay=str(total_price)
+        monthy_pay=str(total_price),
+        fin_pay = str(updated_income)
     )
 
     # --- Return serialized result ---
@@ -202,11 +224,12 @@ def compute_production_api(
             "delete_index_hr": new_daily_pro.delete_index_hr,
             "price": new_daily_pro.price,
             "overtime": new_daily_pro.overtime,
-            "monthy_pay": str(total_price),
-            "daily_income":daily_price
+            "monthy_pay": str(total_price)
         },
         "details": result
     }
+
+            
 
 
 @router.get("/get_month_income/")
