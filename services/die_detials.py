@@ -177,24 +177,14 @@ def compute_production_hours(
             
             # total days in current month
             total_days = calendar.monthrange(year, month)[1]
-        
-            non_sunday_days = 0
-        
-            for day in range(1, total_days + 1):
-                current_date = date(year, month, day)
-                if current_date.weekday() != 6:  # 6 = Sunday
-                    non_sunday_days += 1
-        
             # calculate per-day price
-            daily_price = monthly_income / non_sunday_days
+            daily_price = monthly_income / total_days
 
-        monthy = total_price
+        leave = 0
         if len(die_ids) == 1:
             special_dies = {"KSD223adbd2", "KSDd3a58378"}
             if len(die_ids) == 1 and die_ids[0] in special_dies:
-                monthy = str(total_price)
-            else:
-                monthy = str(total_price + daily_price)
+                leave = 1 
 
         new_daily_pro = Daily_Production(
             date=input_date,
@@ -204,7 +194,7 @@ def compute_production_hours(
             delete_index_hr=delete_list, 
             price=price_list,
             overtime=updated_hours,
-            monthy_pay=monthy
+            monthy_pay=str(total_price)
         )
 
         db.add(new_daily_pro)
@@ -216,7 +206,10 @@ def compute_production_hours(
         ).first()
 
         if existing:
-            existing.income += float(monthy)
+            if leave == 1:
+                existing.income -= float(daily_price)
+            else:
+                existing.income += float(total_price)
             existing.tea+=tea
             existing.water+=water
             updated_income = round(existing.income, 2)
@@ -224,15 +217,15 @@ def compute_production_hours(
         else:
             new_income = MonthIncome(
             date=input_date.replace(day=1),   # store 1st day of month
-            income=round(float(monthy), 2),  
+            income=round(float(total_price + monthly_income), 2),  
             tea=0,
             water=0
             )
             db.add(new_income)
             db.commit()
             db.refresh(new_income)
-
-    # Final return
+            updated_income = round(new_income.income, 2)
+            
     return {
         "status": "success",
         "data": result,

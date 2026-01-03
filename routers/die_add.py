@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException,Request
 from sqlalchemy.orm import Session
 from database.db import get_db
 from schema.new_die import dailyupdate,DieUpdate
@@ -12,11 +12,11 @@ from typing import List, Optional
 from datetime import date as DateType
 from models.production import Daily_Production
 from sqlalchemy import extract
+from sqlalchemy import text
 from models.monthy import MonthIncome
 from models.setting_income import dailyIncome
 import calendar
-
-
+import time
 
 router = APIRouter()
 
@@ -163,30 +163,21 @@ def compute_production_api(
     daily_price = 0
     daily_income_setting = db.query(dailyIncome).first()
     if daily_income_setting:
-        monthly_income = daily_income_setting.income
-    
-        month = input_date.month
-        year = input_date.year
+            monthly_income = daily_income_setting.income
         
-        # total days in current month
-        total_days = calendar.monthrange(year, month)[1]
-    
-        non_sunday_days = 0
-    
-        for day in range(1, total_days + 1):
-            current_date = date(year, month, day)
-            if current_date.weekday() != 6:  # 6 = Sunday
-                non_sunday_days += 1
-    
-        # calculate per-day price
-        daily_price = monthly_income / non_sunday_days
-    monthy = total_price
+            month = input_date.month
+            year = input_date.year
+            
+            # total days in current month
+            total_days = calendar.monthrange(year, month)[1]
+            # calculate per-day price
+            daily_price = monthly_income / total_days
+
+    leave = 0
     if len(die_ids) == 1:
         special_dies = {"KSD223adbd2", "KSDd3a58378"}
         if len(die_ids) == 1 and die_ids[0] in special_dies:
-            monthy = str(total_price)
-        else:
-            monthy = str(total_price + daily_price)
+            leave = 1
 
     # --- Step 4: Construct Daily_Production-like object (no DB save) ---
     new_daily_pro = Daily_Production(
@@ -197,7 +188,7 @@ def compute_production_api(
         delete_index_hr=delete_list,
         price=price_list,
         overtime=updated_hours,
-        monthy_pay=monthy
+        monthy_pay=str(total_price)
     )
 
     # --- Return serialized result ---
