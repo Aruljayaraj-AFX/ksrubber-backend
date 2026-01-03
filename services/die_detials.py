@@ -215,6 +215,8 @@ def compute_production_hours(
             updated_income = round(existing.income, 2)
             db.commit()
         else:
+            if leave ==1:
+                monthly_income -= float(daily_price)
             new_income = MonthIncome(
             date=input_date.replace(day=1),   # store 1st day of month
             income=round(float(total_price + monthly_income), 2),  
@@ -225,7 +227,7 @@ def compute_production_hours(
             db.commit()
             db.refresh(new_income)
             updated_income = round(new_income.income, 2)
-            
+
     return {
         "status": "success",
         "data": result,
