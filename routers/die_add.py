@@ -209,8 +209,7 @@ def compute_production_api(
         delete_index_hr=delete_list,
         price=price_list,
         overtime=updated_hours,
-        monthy_pay=str(total_price),
-        fin_pay = str(updated_income)
+        monthy_pay=str(total_price)
     )
 
     # --- Return serialized result ---
@@ -224,7 +223,8 @@ def compute_production_api(
             "delete_index_hr": new_daily_pro.delete_index_hr,
             "price": new_daily_pro.price,
             "overtime": new_daily_pro.overtime,
-            "monthy_pay": str(total_price)
+            "monthy_pay": str(total_price),
+            "fin_pay" : str(updated_income)
         },
         "details": result
     }
