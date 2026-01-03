@@ -190,8 +190,9 @@ def compute_production_api(
         else:
             existing.income += float(total_price)
         updated_income = round(existing.income, 2)
-        db.commit()
     else:
+        if leave ==1:
+            monthly_income -= float(daily_price)
         new_income = MonthIncome(
         date=input_date.replace(day=1),   # store 1st day of month
         income=round(float(total_price + monthly_income), 2),  
