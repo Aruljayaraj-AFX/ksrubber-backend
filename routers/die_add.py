@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from database.db import get_db
 from schema.new_die import dailyupdate,DieUpdate
 from schema.daily import ProductionFilterRequest,UpdateCurrentMonthIncome
+from schema.email_user import EmailCreate
 from services.die_add import new_die
 from services.editdie import edit_diee
 from services.die_detials import get_all_die_data,compute_production_hours,get_daily_production,get_die_data_by_name,get_production_by_date,get_income
@@ -12,6 +13,7 @@ from typing import List, Optional
 from datetime import date as DateType
 from models.production import Daily_Production
 from sqlalchemy import extract
+from models.user_base import Userbase
 from sqlalchemy import text
 from models.monthy import MonthIncome
 from models.setting_income import dailyIncome
@@ -361,4 +363,73 @@ def get_income(db: Session = Depends(get_db)):
         "income": row.income,
         "created_at": row.created_at,
         "updated_at": row.updated_at
+    }
+
+from email.message import EmailMessage
+import aiosmtplib
+import os
+
+@router.post("/email")
+async def save_email(data: EmailCreate, db: Session = Depends(get_db)):
+    # Prevent duplicate emails
+    existing = db.query(Userbase).filter(
+        Userbase.income == data.email
+    ).first()
+
+    if existing:
+        raise HTTPException(status_code=400, detail="Email already registered")
+
+    # Save email
+    new_email = Userbase(income=data.email)
+    db.add(new_email)
+    db.commit()
+    db.refresh(new_email)
+
+    # Email HTML
+    SUCCESS_EMAIL_HTML = """
+    <!DOCTYPE html>
+    <html>
+      <body style="font-family: Arial, sans-serif; background:#f9f9f9; padding:20px;">
+        <div style="max-width:600px; margin:auto; background:#ffffff; padding:30px; border-radius:10px;">
+          <h2 style="color:#111;">🎉 You’re In!</h2>
+          <p style="color:#444; font-size:15px;">
+            Thank you for joining <strong>Ellectra</strong>.
+          </p>
+          <p style="color:#444; font-size:15px;">
+            You’ve successfully registered for our pre-launch rewards.
+            <br /><br />
+            <strong>Rewards & exclusive discounts</strong> will be available soon,
+            and you’ll be able to claim them directly on our website.
+          </p>
+          <p style="margin-top:30px; color:#777; font-size:13px;">
+            Stay tuned,<br />
+            <strong>Team Ellectra</strong>
+          </p>
+        </div>
+      </body>
+    </html>
+    """
+
+    # ✅ Create EmailMessage properly
+    message = EmailMessage()
+    message["From"] = "Ellectra <ellectra2025@gmail.com>"
+    message["To"] = data.email
+    message["Subject"] = "Welcome to Ellectra! 🎉"
+
+    message.set_content("Your email client does not support HTML.")
+    message.add_alternative(SUCCESS_EMAIL_HTML, subtype="html")
+
+    # Send email
+    await aiosmtplib.send(
+        message,
+        hostname="smtp.gmail.com",
+        port=587,
+        start_tls=True,
+        username="ellectra2025@gmail.com",
+        password="iyffkshvkjtgdgqi" 
+    )
+
+    return {
+        "status": "success",
+        "message": "Email saved and confirmation sent"
     }

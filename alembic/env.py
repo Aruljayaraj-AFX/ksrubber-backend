@@ -9,6 +9,7 @@ from models.production import Base
 from models.monthy import Base2
 from models.setting_income import Base4
 from models.Die_models import Base1
+from models.user_base import Base5
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -23,7 +24,7 @@ if config.config_file_name is not None:
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
-target_metadata = Base.metadata,Base2.metadata,Base1.metadata,Base4.metadata
+target_metadata = Base.metadata,Base2.metadata,Base1.metadata,Base4.metadata,Base5.metadata
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
