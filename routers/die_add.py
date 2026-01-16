@@ -433,3 +433,41 @@ async def save_email(data: EmailCreate, db: Session = Depends(get_db)):
         "status": "success",
         "message": "Email saved and confirmation sent"
     }
+@router.get("/monthly-income/currentLY")
+def get_current_month_income(db: Session = Depends(get_db)):
+    try:
+        now = datetime.now()
+        current_year = now.year
+        current_month = now.month
+
+        # Find the record for the current month
+        income_record = (
+            db.query(MonthIncome)
+            .filter(
+                extract('year', MonthIncome.date) == current_year,
+                extract('month', MonthIncome.date) == current_month
+            )
+            .first()
+        )
+
+        if not income_record:
+            raise HTTPException(
+                status_code=404,
+                detail="Income record not found for the current month"
+            )
+
+        return {
+            "status": "success",
+            "message": "Current month income fetched successfully",
+            "data": {
+                "date": income_record.date,
+                "tea": income_record.tea,
+                "water": income_record.water
+            }
+        }
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to fetch current month income: {e}"
+        )
