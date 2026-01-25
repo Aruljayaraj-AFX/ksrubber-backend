@@ -315,15 +315,15 @@ def update_current_month_income(data: UpdateCurrentMonthIncome, db: Session = De
             )
             .first()
         )
+        text=income_record.tea
 
         if not income_record:
             raise HTTPException(status_code=404, detail="Income record not found for the current month")
 
-        # Update values if provided
         if data.tea is not None:
-            income_record.tea = data.tea
+            income_record.tea =income_record.tea+ data.tea
         if data.water is not None:
-            income_record.water = data.water
+            income_record.water = income_record.water+data.water
 
         db.commit()
         db.refresh(income_record)
@@ -334,7 +334,7 @@ def update_current_month_income(data: UpdateCurrentMonthIncome, db: Session = De
             "data": {
                 "date": income_record.date,
                 "tea": income_record.tea,
-                "water": income_record.water
+                "water": income_record.water,
             }
         }
 
