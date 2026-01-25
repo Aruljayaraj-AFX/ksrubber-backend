@@ -34,7 +34,7 @@ def get_daily_production(db: Session):
     except Exception as e:
         return {"status": "error", "message": "Failed to fetch dies", "details": str(e)}
     
-def get_income(db: Session):
+def get_incomeq(db: Session):
     try:
         now = datetime.now()
         current_year = now.year

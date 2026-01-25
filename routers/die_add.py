@@ -6,7 +6,7 @@ from schema.daily import ProductionFilterRequest,UpdateCurrentMonthIncome
 from schema.email_user import EmailCreate
 from services.die_add import new_die
 from services.editdie import edit_diee
-from services.die_detials import get_all_die_data,compute_production_hours,get_daily_production,get_die_data_by_name,get_production_by_date,get_income
+from services.die_detials import get_all_die_data,compute_production_hours,get_daily_production,get_die_data_by_name,get_production_by_date,get_incomeq
 from datetime import datetime,date
 from models.Die_models import Die
 from typing import List, Optional
@@ -44,7 +44,7 @@ def fetch_daily_production(db: Session = Depends(get_db)):
 
 @router.get("/monthly-income/")
 def fetch_monthly_income(db: Session = Depends(get_db)):
-    return get_income(db)
+    return get_incomeq(db)
 
 @router.get("/get-production-date/")
 def get_by_date(input_date: date, db: Session = Depends(get_db)):
