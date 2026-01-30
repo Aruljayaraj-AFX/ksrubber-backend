@@ -299,48 +299,56 @@ def delete_production(sno: int, db: Session = Depends(get_db)):
         db.rollback()
         return {"status": "error", "message": f"Failed to delete: {str(e)}"}
     
-@router.put("/monthly-income/current")
-def update_current_month_income(data: UpdateCurrentMonthIncome, db: Session = Depends(get_db)):
+@router.put("/monthly-income/update")
+def update_month_income(
+    data: UpdateCurrentMonthIncome,
+    db: Session = Depends(get_db)
+):
     try:
-        now = datetime.now()
-        current_year = now.year
-        current_month = now.month
-
-        # Find the record for the current month
         income_record = (
             db.query(MonthIncome)
             .filter(
-                extract('year', MonthIncome.date) == current_year,
-                extract('month', MonthIncome.date) == current_month
+                extract("year", MonthIncome.date) == data.year,
+                extract("month", MonthIncome.date) == data.month
             )
             .first()
         )
-        text=income_record.tea
 
         if not income_record:
-            raise HTTPException(status_code=404, detail="Income record not found for the current month")
+            raise HTTPException(
+                status_code=404,
+                detail="Income record not found for given month and year"
+            )
 
         if data.tea is not None:
-            income_record.tea =income_record.tea+ data.tea
+            income_record.tea += data.tea
+
         if data.water is not None:
-            income_record.water = income_record.water+data.water
+            income_record.water += data.water
 
         db.commit()
         db.refresh(income_record)
 
+        record_date = income_record.date
+
         return {
             "status": "success",
-            "message": "Current month income updated successfully",
+            "message": "Monthly income updated successfully",
             "data": {
-                "date": income_record.date,
+                "year": record_date.year,
+                "month": record_date.month,
+                "month_name": record_date.strftime("%B"),
                 "tea": income_record.tea,
-                "water": income_record.water,
+                "water": income_record.water
             }
         }
 
     except Exception as e:
         db.rollback()
-        raise HTTPException(status_code=500, detail=f"Failed to update current month income: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to update monthly income: {e}"
+        )
     
 @router.put("/setting-income")
 def update_income(income: float, db: Session = Depends(get_db)):

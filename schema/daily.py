@@ -11,5 +11,7 @@ class ProductionFilterRequest(BaseModel):
     water : Optional[int]=0
 
 class UpdateCurrentMonthIncome(BaseModel):
-    tea: float | None = None
-    water: float | None = None
+    year: int
+    month: int
+    tea: Optional[float] = None
+    water: Optional[float] = None
