@@ -481,19 +481,17 @@ def get_current_month_income(db: Session = Depends(get_db)):
         )
 
 @router.put("/monthly-income/water-reset")
-def update_current_month_income(
-    db: Session = Depends(get_db)
+def reset_water_by_month(
+    year: int = Query(..., description="Year e.g. 2026"),
+    month: int = Query(..., ge=1, le=12),
+    db: Session = Depends(get_db),
 ):
     try:
-        now = datetime.now()
-        current_year = now.year
-        current_month = now.month
-
         income_record = (
             db.query(MonthIncome)
             .filter(
-                extract('year', MonthIncome.date) == current_year,
-                extract('month', MonthIncome.date) == current_month
+                extract("year", MonthIncome.date) == year,
+                extract("month", MonthIncome.date) == month,
             )
             .first()
         )
@@ -501,22 +499,31 @@ def update_current_month_income(
         if not income_record:
             raise HTTPException(
                 status_code=404,
-                detail="Income record not found for the current month"
+                detail="Income record not found for selected month",
             )
-        
-        income_record.water = 0
 
+        income_record.water = 0
         db.commit()
         db.refresh(income_record)
 
         return {
             "status": "success",
-            "message": "reset the water value successfully",
+            "message": "Water reset successfully",
+            "data": {
+                "year": year,
+                "month": month,
+                "water": income_record.water,
+            },
         }
 
+    except HTTPException:
+        raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-    
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to reset water",
+        )    
 @router.get("/monthly-income/by-month")
 def get_month_income(
     year: int = Query(..., example=2026),
