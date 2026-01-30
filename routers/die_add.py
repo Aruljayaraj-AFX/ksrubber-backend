@@ -471,3 +471,40 @@ def get_current_month_income(db: Session = Depends(get_db)):
             status_code=500,
             detail=f"Failed to fetch current month income: {e}"
         )
+
+@router.put("/monthly-income/water-reset")
+def update_current_month_income(
+    db: Session = Depends(get_db)
+):
+    try:
+        now = datetime.now()
+        current_year = now.year
+        current_month = now.month
+
+        income_record = (
+            db.query(MonthIncome)
+            .filter(
+                extract('year', MonthIncome.date) == current_year,
+                extract('month', MonthIncome.date) == current_month
+            )
+            .first()
+        )
+
+        if not income_record:
+            raise HTTPException(
+                status_code=404,
+                detail="Income record not found for the current month"
+            )
+        
+        income_record.water = 0
+
+        db.commit()
+        db.refresh(income_record)
+
+        return {
+            "status": "success",
+            "message": "reset the water value successfully",
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
