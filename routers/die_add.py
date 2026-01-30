@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException,Request
+from fastapi import APIRouter, Depends, HTTPException,Request,Query
 from sqlalchemy.orm import Session
 from database.db import get_db
 from schema.new_die import dailyupdate,DieUpdate
@@ -516,3 +516,34 @@ def update_current_month_income(
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+    
+@router.get("/monthly-income/by-month")
+def get_month_income(
+    year: int = Query(..., example=2026),
+    month: int = Query(..., ge=1, le=12),
+    db: Session = Depends(get_db)
+):
+    income_record = (
+        db.query(MonthIncome)
+        .filter(
+            extract("year", MonthIncome.date) == year,
+            extract("month", MonthIncome.date) == month
+        )
+        .first()
+    )
+
+    if not income_record:
+        raise HTTPException(
+            status_code=404,
+            detail="Income record not found for selected month"
+        )
+
+    return {
+        "status": "success",
+        "message": "Monthly income fetched successfully",
+        "data": {
+            "date": income_record.date,
+            "tea": income_record.tea,
+            "water": income_record.water
+        }
+    }
